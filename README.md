@@ -10,7 +10,7 @@ I encourage to use `virtualenv` for this project, or make this ez with `PyCharm 
 
 **Install package with:**
 `
-pip install -r requirement.txt
+pip install -r requirements.txt
 `
 
 ## Config file ##

@@ -3,6 +3,7 @@ geckodriver.log
 ghostdriver.log
 image/
 img/
+capture.png
 templates/
 apps/__pycache__
 exmaple.db
