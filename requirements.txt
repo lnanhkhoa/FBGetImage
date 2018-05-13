@@ -1,0 +1,5 @@
+requests
+selenium
+tinydb
+proxy_list
+pyvirtualdisplay
