@@ -40,6 +40,7 @@ def preprocessor():
         'https://www.facebook.com/search/str/' + text_search + '/stories-keyword/today/date/stories/intersect')
     # searchPage = functionsWebDriver.getURL('file:///home/lnanhkhoa/Devs/seleniumPython/templates/1.html')
     functionsWebDriver.load_all_post_search()
+    functionsWebDriver.process_like_fanpage(0.5)
     print('load All Done')
     # functionsWebDriver.clickSeeMore()
 
@@ -57,7 +58,7 @@ def main():
         print('!!!===!!!' + name + '!!!===!!!')
         print('')
         functionsWebDriver.process_in_container(name)
-    # functionsWebDriver.process_in_container('fbBrowseScrollingPagerContainer10')
+    functionsWebDriver.process_in_container('fbBrowseScrollingPagerContainer10')
 
 
 def test():

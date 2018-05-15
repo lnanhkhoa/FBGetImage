@@ -1,5 +1,6 @@
 import os
 import time
+import random
 
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException
@@ -197,7 +198,14 @@ class FunctionsWebDriver:
         self.web_driver.execute_script("arguments[0].scrollIntoView(true);", object)
 
     def like_the_post(self, element_wrapper):
-        pass
+        # Ta on bai post bang cach like
+        button_like_post = element_wrapper.find_elements_by_class_name("UFILikeLink")
+        if button_like_post.__len__() > 0:
+            for button in button_like_post:
+                try:
+                    button.click()
+                except Exception as e:  # ignore
+                    print(e)
 
     def quit(self):
         self.clear_proxy(self.profile)
@@ -237,10 +245,12 @@ class FunctionsWebDriver:
         self.scroll_into_view_by_js(child_user_content_wrapper)
         print('<-------------------->')
         content_post = self.get_content_of_post(child_user_content_wrapper)
-        self.like_the_post(child_user_content_wrapper)
+        likes_text = self.get_like_in_post(child_user_content_wrapper)
+        print(likes_text)
         list_image_urls = self.process_get_images_in_post(child_user_content_wrapper)
         print(len(list_image_urls), list_image_urls)
-        self.save_link_to_buy_product()
+        self.save_link_to_buy_product() # skip
+        self.like_the_post(child_user_content_wrapper)
 
     def get_content_of_post(self, element_wapper):
         try:
@@ -294,8 +304,36 @@ class FunctionsWebDriver:
         self.escape_theater()
         return list_image_urls
 
-    def get_like_in_post(self):
-        pass
+    def _get_like_comment_share(self, element, default_like=None):
+        text = ""
+        array = []
+        if default_like is None:
+            likes = element.find_elements_by_class_name('_4arz')
+            for like in likes:
+                text += like.text + ' likes, '
+                array.extend(Utils.get_numbers_in_string())
+        else:
+            text += str(default_like) + ' likes, '
+            array.extend([default_like])
+        comment_shares = element.find_elements_by_class_name('_36_q')
+        for comment_share in comment_shares:
+            text += comment_share.text + ', '
+            array.extend(Utils.get_numbers_in_string())
+        if text == "":
+            text = "None like,comment,share"
+        return text
+
+    def get_like_in_post(self, element_wrapper):
+        try:
+            default_likes = '0'
+            like_comment_content_element = element_wrapper.find_element_by_class_name('commentable_item')
+            text_like = self._get_like_comment_share(like_comment_content_element, default_likes)
+            return text_like
+        except NoSuchElementException as e:
+            return '{0} like, comment, share'.format(str(default_likes))
+        except:
+            print("error in get_like_in_post")
+            return '{0} like, comment, share'.format(str(default_likes))
 
     def get_like_in_theater(self):
         return '0'
@@ -377,7 +415,7 @@ class FunctionsWebDriver:
             return [array_checkin, likes]
         # have many images
         result_tracking = result_tracking_post
-        for x in range(0, 10):
+        for x in range(0, 50):
             if result_tracking == 1:
                 if type_script == 1:
                     [new_url, likes] = self.__get_faster__data_image_theater__()
@@ -412,3 +450,41 @@ class FunctionsWebDriver:
             print(e)
             print("error when get diff image")
             return [[], '0']
+
+    def function_like_fanpage(self, percent):
+        list_likepage_button = self.web_driver.find_elements_by_css_selector(
+            'button.PageLikeButton:not(PageLikedButton)')
+        length = list_likepage_button.__len__()
+        number_of_delete_elements = Utils.holding_percent(length, percent)
+        if number_of_delete_elements > 0:
+            for x in range(0, number_of_delete_elements):
+                list_likepage_button.pop(random.randint(0, length-x-1))
+        if list_likepage_button.__len__() > 0:
+            for likepage_button in list_likepage_button:
+                # avoid Stale Element Exception
+                id = likepage_button.get_attribute('id')
+                button = self.web_driver.find_element_by_id(id)
+                self.web_driver.execute_script("arguments[0].click();", button)
+
+    def process_like_fanpage(self, percent):
+        print('process_like_fanpage')
+        try:
+            self.function_like_fanpage(percent)
+        except Exception as e:
+            print('error in process_like_fanpage')
+            print(e)
+            self.press_key_in_page_html(Keys.ESCAPE)
+
+    def process_dislike_fanpage(self):
+        list_likepage_button = self.web_driver.find_elements_by_class_name('PageLikeButton')
+        if list_likepage_button.__len__() > 0:
+            print('dislike')
+            print(list_likepage_button.__len__())
+            for likepage_button in list_likepage_button:
+                self.web_driver.execute_script("arguments[0].click();", likepage_button)
+            list_dislike_page = self.web_driver.find_elements_by_class_name('itemAnchor')
+            for dislike_page in list_dislike_page:
+                self.web_driver.execute_script("arguments[0].click();", dislike_page)
+
+
+

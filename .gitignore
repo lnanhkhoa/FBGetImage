@@ -8,3 +8,4 @@ templates/
 apps/__pycache__
 exmaple.db
 venv/
+__pycache__/

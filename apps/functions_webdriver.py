@@ -230,14 +230,14 @@ class FunctionsWebDriver:
             likes = element.find_elements_by_class_name('_4arz')
             for like in likes:
                 text += like.text + ' likes, '
-                array.extend(Utils.get_numbers_in_string(like.text))
+                array.extend(Utils.get_numbers_in_string())
         else:
             text += str(default_like) + ' likes, '
             array.extend([default_like])
         comment_shares = element.find_elements_by_class_name('_36_q')
         for comment_share in comment_shares:
             text += comment_share.text + ', '
-            array.extend(Utils.get_numbers_in_string(comment_share.text))
+            array.extend(Utils.get_numbers_in_string())
         if text == "":
             text = "None like,comment,share"
         return text
