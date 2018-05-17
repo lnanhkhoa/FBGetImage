@@ -31,3 +31,6 @@ class Utils:
     def holding_percent(length, percent):
         return int(length*(1 - percent))
 
+    @staticmethod
+    def get_link_buy_product(content):
+        return []

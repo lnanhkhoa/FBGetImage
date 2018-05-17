@@ -2,7 +2,7 @@
 import logging
 import os
 import time
-
+from pyvirtualdisplay import Display
 import apps
 from config import DATABASE_CONFIG
 
@@ -18,7 +18,7 @@ cur_path = os.path.dirname(__file__)
 # logger.setLevel(logging.WARNING)
 
 # Apps
-# display = Display(visible=0, size=(800, 600))
+display = Display(visible=0, size=(1024, 768))
 # display.start()
 tinydbInfoAcc = apps.TinyDBInfoAcc()
 functionsWebDriver = apps.FunctionsWebDriver('firefox', tinydbInfoAcc)
@@ -38,11 +38,10 @@ def preprocessor():
     functionsWebDriver.login(accountFacebook)
     searchPage = functionsWebDriver.get_url(
         'https://www.facebook.com/search/str/' + text_search + '/stories-keyword/today/date/stories/intersect')
-    # searchPage = functionsWebDriver.getURL('file:///home/lnanhkhoa/Devs/seleniumPython/templates/1.html')
     functionsWebDriver.load_all_post_search()
     functionsWebDriver.process_like_fanpage(0.5)
+    functionsWebDriver.click_see_more()
     print('load All Done')
-    # functionsWebDriver.clickSeeMore()
 
 
 def databasesShow():
@@ -53,12 +52,12 @@ def main():
     print("==========================================")
     listName = functionsWebDriver.get_list_name_container()
     len1ist = len(listName)
+    print('So container: ' + str(len1ist))
     for name in listName:
         print('')
         print('!!!===!!!' + name + '!!!===!!!')
         print('')
         functionsWebDriver.process_in_container(name)
-    functionsWebDriver.process_in_container('fbBrowseScrollingPagerContainer10')
 
 
 def test():

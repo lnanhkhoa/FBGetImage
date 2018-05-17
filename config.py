@@ -2,14 +2,12 @@ DATABASE_CONFIG = dict(
     text_search="need this shirt",
     path_image='image',
     tree_path="2",
-    # username="dtkuls18707@piupiu.tk",
     # username="uhjcck89333@piupiu.tk",
-    # username="bttnen78126@piepie.cf",
+    username="bttnen78126@piepie.cf",
     # username="qgdblq36460@piupiu.tk",
-    username="oqrgqq66722@piepie.cf",
     password="qeqeqe123",
-    enable_change_proxy=False,
-    proxy_host="58.187.145.42",
+    enable_change_proxy=True,
+    proxy_host="117.6.161.118",
     proxy_port="53281",
     type_of_run_script=1  # 0 is default (testing, not release), 1 is faster run script
 )

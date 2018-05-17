@@ -65,7 +65,7 @@ class FunctionsWebDriver:
         self.web_driver = webdriver.Firefox(firefox_profile=self.profile, capabilities=firefox_capabilities)
         # self.web_driver1 = webdriver.Firefox(firefox_profile=self.profile, capabilities=firefox_capabilities)
         # self.web_driver2 = webdriver.Firefox(firefox_profile=self.profile, capabilities=firefox_capabilities)
-        # self.web_driver.maximize_window()
+        self.web_driver.maximize_window()
         self.actions = ActionChains(self.web_driver)
 
     @staticmethod
@@ -118,7 +118,7 @@ class FunctionsWebDriver:
         login_box = self.web_driver.find_element_by_id('loginbutton')
         login_box.click()
         print("Done")
-        self.web_driver.get_screenshot_as_file("capture.png")
+        # self.web_driver.get_screenshot_as_file("capture.png")
         return True
 
     @staticmethod
@@ -139,7 +139,7 @@ class FunctionsWebDriver:
         while not stop_send_key or count < 1:
             count -= 1
             search_page.send_keys(Keys.END)
-            time.sleep(1)
+            time.sleep(2)
             try:
                 search_page.find_element_by_id('browse_end_of_results_footer')
                 stop_send_key = True
@@ -149,6 +149,7 @@ class FunctionsWebDriver:
                 pass
 
     def click_see_more(self):
+        print("click_see_more")
         list_see_more = self.web_driver.find_elements_by_class_name('see_more_link')
         for seeMore in list_see_more:
             seeMore.click()
@@ -199,11 +200,13 @@ class FunctionsWebDriver:
 
     def like_the_post(self, element_wrapper):
         # Ta on bai post bang cach like
+        time.sleep(0.2)
         button_like_post = element_wrapper.find_elements_by_class_name("UFILikeLink")
         if button_like_post.__len__() > 0:
             for button in button_like_post:
                 try:
                     button.click()
+                    print("like ta on")
                 except Exception as e:  # ignore
                     print(e)
 
@@ -245,11 +248,12 @@ class FunctionsWebDriver:
         self.scroll_into_view_by_js(child_user_content_wrapper)
         print('<-------------------->')
         content_post = self.get_content_of_post(child_user_content_wrapper)
-        likes_text = self.get_like_in_post(child_user_content_wrapper)
-        print(likes_text)
+        list_link = Utils.get_link_buy_product(content_post)
+        self.save_link_to_buy_product(list_link) # skip
+        # likes_text = self.get_like_in_post(child_user_content_wrapper)
+        # print(likes_text)
         list_image_urls = self.process_get_images_in_post(child_user_content_wrapper)
         print(len(list_image_urls), list_image_urls)
-        self.save_link_to_buy_product() # skip
         self.like_the_post(child_user_content_wrapper)
 
     def get_content_of_post(self, element_wapper):
@@ -261,7 +265,7 @@ class FunctionsWebDriver:
             content_post = ''
         return content_post
 
-    def save_link_to_buy_product(self):
+    def save_link_to_buy_product(self, list_link):
         pass
 
     def process_get_images_in_post(self, element_wapper):
@@ -456,6 +460,8 @@ class FunctionsWebDriver:
             'button.PageLikeButton:not(PageLikedButton)')
         length = list_likepage_button.__len__()
         number_of_delete_elements = Utils.holding_percent(length, percent)
+        print('like fanpage ' + str(length-number_of_delete_elements)
+              + '/ ' + str(length))
         if number_of_delete_elements > 0:
             for x in range(0, number_of_delete_elements):
                 list_likepage_button.pop(random.randint(0, length-x-1))
@@ -467,8 +473,8 @@ class FunctionsWebDriver:
                 self.web_driver.execute_script("arguments[0].click();", button)
 
     def process_like_fanpage(self, percent):
-        print('process_like_fanpage')
         try:
+            print('process like fanpage')
             self.function_like_fanpage(percent)
         except Exception as e:
             print('error in process_like_fanpage')
@@ -486,5 +492,11 @@ class FunctionsWebDriver:
             for dislike_page in list_dislike_page:
                 self.web_driver.execute_script("arguments[0].click();", dislike_page)
 
-
+    def click_see_more(self):
+        list_see_more = self.web_driver.find_elements_by_class_name('see_more_link')
+        for seeMore in list_see_more:
+            try:
+                seeMore.click()
+            except Exception as e:
+                print(e)
 
