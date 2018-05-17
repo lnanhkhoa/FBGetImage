@@ -20,9 +20,8 @@ tree_path = DATABASE_CONFIG['treePath']
 enable_change_proxy = DATABASE_CONFIG['enable_change_proxy']
 proxy_host = DATABASE_CONFIG['proxy_host']
 proxy_port = DATABASE_CONFIG['proxy_port']
-
 cur_path = os.path.dirname(__file__)
-image_path_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), path_image, tree_path)
+image_path_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), path_image, tree_path_directory)
 if not os.path.exists(image_path_directory):
     os.makedirs(image_path_directory)
 

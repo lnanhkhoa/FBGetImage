@@ -24,7 +24,7 @@ proxy_port = DATABASE_CONFIG['proxy_port']
 type_script = DATABASE_CONFIG['type_of_run_script']
 
 cur_path = os.path.dirname(__file__)
-image_path_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), path_image, tree_path)
+image_path_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), path_image, time.strftime('%Y%m%d'), tree_path)
 all_images_path_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), path_image, "all")
 if not os.path.exists(image_path_directory):
     os.makedirs(image_path_directory)
