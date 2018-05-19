@@ -2,9 +2,10 @@
 import logging
 import os
 import time
-from pyvirtualdisplay import Display
 import apps
-from config import DATABASE_CONFIG
+import configparser
+config = configparser.ConfigParser()
+config.read('config.ini')
 
 # Current path directory
 cur_path = os.path.dirname(__file__)
@@ -18,19 +19,19 @@ cur_path = os.path.dirname(__file__)
 # logger.setLevel(logging.WARNING)
 
 # Apps
-# display = Display(visible=0, size=(1024, 768))
+# display = Display(visible=0, size=(800, 600))
 # display.start()
 tinydbInfoAcc = apps.TinyDBInfoAcc()
 functionsWebDriver = apps.FunctionsWebDriver('firefox', tinydbInfoAcc)
 
 # Information Users Facebook
-user = DATABASE_CONFIG['username']
-password = DATABASE_CONFIG['password']
+user = config['DATABASE_CONFIG']['username']
+password = config['DATABASE_CONFIG']['password']
 accountFacebook = apps.AccountsFacebook(user, password)
 
 # Scripts
-text_search = DATABASE_CONFIG['text_search']
-type_of_run_script = DATABASE_CONFIG['type_of_run_script']
+text_search = config['DATABASE_CONFIG']['text_search']
+type_of_run_script = config['DATABASE_CONFIG']['type_of_run_script']
 
 
 def preprocessor():
@@ -39,10 +40,9 @@ def preprocessor():
     functionsWebDriver.login(accountFacebook)
     searchPage = functionsWebDriver.get_url(
         'https://www.facebook.com/search/str/' + text_search + '/stories-keyword/today/date/stories/intersect')
-    functionsWebDriver.load_all_post_search()
-    functionsWebDriver.process_like_fanpage(0.5)
-    functionsWebDriver.click_see_more()
-    print('load All Done')
+    # functionsWebDriver.load_all_post_search()
+    # functionsWebDriver.process_like_fanpage(0.5)
+    # functionsWebDriver.click_see_more()
 
 
 def databasesShow():
@@ -59,7 +59,7 @@ def main():
         print('!!!===!!!' + name + '!!!===!!!')
         print('')
         functionsWebDriver.process_in_container(name)
-
+    functionsWebDriver.logout()
 
 def test():
     pass

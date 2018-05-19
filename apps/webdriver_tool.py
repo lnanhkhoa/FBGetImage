@@ -1,7 +1,6 @@
 import os
 import time
 import random
-from base64 import b64encode
 
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException
@@ -11,18 +10,25 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.firefox.options import Options
 
 from .process_image import ProcessImage
 from apps.utils import Utils
-from config import DATABASE_CONFIG
+import configparser
+config = configparser.ConfigParser()
+config.read('config.ini')
 
 # Process Image
-path_image = DATABASE_CONFIG['path_image']
-tree_path = DATABASE_CONFIG['tree_path']
-enable_change_proxy = DATABASE_CONFIG['enable_change_proxy']
-proxy_host = DATABASE_CONFIG['proxy_host']
-proxy_port = DATABASE_CONFIG['proxy_port']
-type_script = DATABASE_CONFIG['type_of_run_script']
+path_image = config['DATABASE_CONFIG']['path_image']
+tree_path = config['DATABASE_CONFIG']['tree_path']
+enable_change_proxy = config['DATABASE_CONFIG']['enable_change_proxy']
+proxy_host = config['DATABASE_CONFIG']['proxy_host']
+proxy_port = config['DATABASE_CONFIG']['proxy_port']
+type_script = config['DATABASE_CONFIG']['type_of_run_script']
+proxy_authen = dict(
+    username=config['DATABASE_CONFIG']['proxy_username'],
+    password=config['DATABASE_CONFIG']['proxy_password']
+)
 
 cur_path = os.path.dirname(__file__)
 image_path_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), path_image, tree_path)
@@ -53,7 +59,7 @@ class FunctionsWebDriver:
         self.profile.set_preference("browser.download.manager.useWindow", False)
         self.profile.set_preference("browser.download.manager.showAlertOnComplete", False)
         self.profile.set_preference("browser.download.manager.closeWhenDone", True)
-        if enable_change_proxy:
+        if enable_change_proxy == '1':
             self.profile = self.change_proxy(proxy_host, proxy_port, self.profile)
         else:
             self.profile = self.clear_proxy(self.profile)
@@ -63,7 +69,9 @@ class FunctionsWebDriver:
         firefox_capabilities['marionette'] = True
         firefox_capabilities['binary'] = '/usr/bin/firefox'
 
-        self.web_driver = webdriver.Firefox(firefox_profile=self.profile, capabilities=firefox_capabilities)
+        options = Options()
+        options.add_argument("--headless")
+        self.web_driver = webdriver.Firefox(firefox_profile=self.profile, firefox_options=options, capabilities=firefox_capabilities)
         self.handling_authentication()
         self.web_driver.maximize_window()
         self.actions = ActionChains(self.web_driver)
@@ -79,10 +87,6 @@ class FunctionsWebDriver:
         :param profile:
         :return:
         """
-        proxy_info = dict(
-            username="vannhan24",
-            password="B8a2ZgA"
-        )
         if profile is None:
             profile = FirefoxProfile()
         profile.set_preference("network.proxy.type", 1)
@@ -128,6 +132,7 @@ class FunctionsWebDriver:
     def logout(self):
         logout = self.web_driver.find_element_by_id("userNavigationLabel")
         logout.click()
+        print('log out acc')
         time.sleep(1)
         logout2 = self.web_driver.find_element_by_css_selector(
             "li._54ni:nth-child(12) > a:nth-child(1) > span:nth-child(1) > span:nth-child(1)")
@@ -156,12 +161,17 @@ class FunctionsWebDriver:
                 pass
             except:
                 pass
+        print('load All Done')
 
     def click_see_more(self):
         print("click_see_more")
         list_see_more = self.web_driver.find_elements_by_class_name('see_more_link')
         for seeMore in list_see_more:
-            seeMore.click()
+            try:
+                seeMore.click()
+            except Exception as e:
+                print('error in click_see_more')
+                print(e)
 
     def get_list_name_container(self):
         count = 0
@@ -261,8 +271,6 @@ class FunctionsWebDriver:
         content_post = self.get_content_of_post(child_user_content_wrapper)
         list_link = Utils.get_link_buy_product(content_post)
         self.save_link_to_buy_product(list_link) # skip
-        # likes_text = self.get_like_in_post(child_user_content_wrapper)
-        # print(likes_text)
         list_image_urls = self.process_get_images_in_post(child_user_content_wrapper)
         print(len(list_image_urls), list_image_urls)
         # self.like_the_post(child_user_content_wrapper)
@@ -284,7 +292,7 @@ class FunctionsWebDriver:
         :param element_wapper:
         :return list image urls
         """
-        list_image_urls = None
+        list_image_urls = []
         list_image_theater = element_wapper.find_elements_by_css_selector("a[rel='theater']"
                                                                     + "[data-render-location='homepage_stream']")
         if list_image_theater.__len__() == 0:
@@ -299,10 +307,10 @@ class FunctionsWebDriver:
             print("Just 1 image")
             self._click_first_image_theater_(list_image_theater[0])
             url = []
-            likes = None
+            likes = ''
             result_tracking = self.tracking_theater()
             if result_tracking == 1:
-                if type_script == 1:
+                if type_script == '1':
                     [list_image_urls, likes] = self.__get_faster__data_image_theater__()
             if result_tracking == 3:
                 [list_image_urls, likes] = self.get_different_data_image()
@@ -319,39 +327,34 @@ class FunctionsWebDriver:
         self.escape_theater()
         return list_image_urls
 
-    def _get_like_comment_share(self, element, default_like=None):
-        text = ""
-        array = []
-        if default_like is None:
-            likes = element.find_elements_by_class_name('_4arz')
-            for like in likes:
-                text += like.text + ' likes, '
-                array.extend(Utils.get_numbers_in_string(text))
-        else:
-            text += str(default_like) + ' likes, '
-            array.extend([default_like])
-        comment_shares = element.find_elements_by_class_name('_36_q')
-        for comment_share in comment_shares:
-            text += comment_share.text + ', '
-            array.extend(Utils.get_numbers_in_string())
-        if text == "":
-            text = "None like,comment,share"
-        return text
-
     def get_like_in_post(self, element_wrapper):
-        try:
-            default_likes = '0'
-            like_comment_content_element = element_wrapper.find_element_by_class_name('commentable_item')
-            text_like = self._get_like_comment_share(like_comment_content_element, default_likes)
-            return text_like
-        except NoSuchElementException as e:
-            return '{0} like, comment, share'.format(str(default_likes))
-        except:
-            print("error in get_like_in_post")
-            return '{0} like, comment, share'.format(str(default_likes))
+        pass
 
     def get_like_in_theater(self):
-        return '0'
+        wait = WebDriverWait(self.web_driver, 10)
+        get_like_share = wait.until(expected_conditions.presence_of_element_located((By.ID, "fbPhotoSnowliftFeedback")))
+        # Count the number of likes
+        number_of_likes, number_of_shares = '0 likes', '0 share'
+        try:
+            likes = get_like_share.find_element_by_class_name('_4arz')
+            number_of_likes = likes.get_attribute("innerText")
+            # print('The number of likes:', number_of_likes)
+        except NoSuchElementException as e:
+            # print("The number of likes: 0")
+            pass
+        except Exception as e:
+            print(e)
+        # Count the number of shares
+        try:
+            shares = get_like_share.find_element_by_class_name('UFIShareLink')
+            number_of_shares = shares.get_attribute("innerText")
+            # print('The number of shares:', number_of_shares)
+        except NoSuchElementException:
+            # print("The number of shares: 0")
+            pass
+        except Exception as e:
+            print(e)
+        return str(number_of_likes + number_of_shares)
 
     def tracking_theater(self):
         """
@@ -426,22 +429,21 @@ class FunctionsWebDriver:
         array_checkin = []
         result_tracking_post = self.tracking_theater()
         if result_tracking_post == 3:
+            # mac dinh 0 likes, 0 share
             [array_checkin, likes] = self.get_different_data_image()
             return [array_checkin, likes]
         # have many images
         result_tracking = result_tracking_post
         for x in range(0, 50):
             if result_tracking == 1:
-                if type_script == 1:
+                if type_script == '1':
                     [new_url, likes] = self.__get_faster__data_image_theater__()
                     if new_url[0] in array_checkin:
                         break
                     array_checkin.extend(new_url)
             self.next_image_theater()
             result_tracking = self.tracking_theater()
-
         likes = '0'
-        print('OK')
         return [array_checkin, likes]
 
     def get_different_data_image(self) -> object:
@@ -459,7 +461,7 @@ class FunctionsWebDriver:
                     process_image.get_image_from_url(url, name_image)
                     process_image.get_image_into_all(url, name_image)
                     array_url.append(url)
-            like = '0'
+            like = '0 likes, 0 share'
             return [array_url, like]
         except Exception as e:
             print(e)
@@ -482,6 +484,7 @@ class FunctionsWebDriver:
                 id = likepage_button.get_attribute('id')
                 button = self.web_driver.find_element_by_id(id)
                 self.web_driver.execute_script("arguments[0].click();", button)
+                time.sleep(1)
 
     def process_like_fanpage(self, percent):
         try:
@@ -503,26 +506,9 @@ class FunctionsWebDriver:
             for dislike_page in list_dislike_page:
                 self.web_driver.execute_script("arguments[0].click();", dislike_page)
 
-    def click_see_more(self):
-        list_see_more = self.web_driver.find_elements_by_class_name('see_more_link')
-        for seeMore in list_see_more:
-            try:
-                seeMore.click()
-            except Exception as e:
-                print(e)
-
     def handling_authentication(self):
-        proxy_authen = dict(
-            username='vannhan24',
-            password='B8a2ZgA'
-        )
-        WebDriverWait(self.web_driver, 10).until(expected_conditions.alert_is_present())
+        WebDriverWait(self.web_driver, 20).until(expected_conditions.alert_is_present())
         alert = self.web_driver.switch_to.alert
         alert.send_keys(proxy_authen['username'] + Keys.TAB + proxy_authen['password'])
         alert.accept()
         self.web_driver.switch_to.default_content()
-
-
-
-        
-
