@@ -18,7 +18,7 @@ cur_path = os.path.dirname(__file__)
 # logger.setLevel(logging.WARNING)
 
 # Apps
-display = Display(visible=0, size=(1024, 768))
+# display = Display(visible=0, size=(1024, 768))
 # display.start()
 tinydbInfoAcc = apps.TinyDBInfoAcc()
 functionsWebDriver = apps.FunctionsWebDriver('firefox', tinydbInfoAcc)
@@ -35,6 +35,7 @@ type_of_run_script = DATABASE_CONFIG['type_of_run_script']
 
 def preprocessor():
     functionsWebDriver.get_url('https://www.facebook.com/')
+    # functionsWebDriver.handling_authentication()
     functionsWebDriver.login(accountFacebook)
     searchPage = functionsWebDriver.get_url(
         'https://www.facebook.com/search/str/' + text_search + '/stories-keyword/today/date/stories/intersect')

@@ -1,6 +1,7 @@
 import os
 import time
 import random
+from base64 import b64encode
 
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException
@@ -63,8 +64,7 @@ class FunctionsWebDriver:
         firefox_capabilities['binary'] = '/usr/bin/firefox'
 
         self.web_driver = webdriver.Firefox(firefox_profile=self.profile, capabilities=firefox_capabilities)
-        # self.web_driver1 = webdriver.Firefox(firefox_profile=self.profile, capabilities=firefox_capabilities)
-        # self.web_driver2 = webdriver.Firefox(firefox_profile=self.profile, capabilities=firefox_capabilities)
+        self.handling_authentication()
         self.web_driver.maximize_window()
         self.actions = ActionChains(self.web_driver)
 
@@ -79,6 +79,10 @@ class FunctionsWebDriver:
         :param profile:
         :return:
         """
+        proxy_info = dict(
+            username="vannhan24",
+            password="B8a2ZgA"
+        )
         if profile is None:
             profile = FirefoxProfile()
         profile.set_preference("network.proxy.type", 1)
@@ -121,8 +125,13 @@ class FunctionsWebDriver:
         # self.web_driver.get_screenshot_as_file("capture.png")
         return True
 
-    @staticmethod
-    def logout():
+    def logout(self):
+        logout = self.web_driver.find_element_by_id("userNavigationLabel")
+        logout.click()
+        time.sleep(1)
+        logout2 = self.web_driver.find_element_by_css_selector(
+            "li._54ni:nth-child(12) > a:nth-child(1) > span:nth-child(1) > span:nth-child(1)")
+        logout2.click()
         return True
 
     def press_key_in_page_html(self, keypress: object) -> object:
@@ -201,15 +210,16 @@ class FunctionsWebDriver:
     def like_the_post(self, element_wrapper):
         # Ta on bai post bang cach like
         time.sleep(0.2)
-        button_like_post = element_wrapper.find_elements_by_class_name("UFILikeLink")
-        if button_like_post.__len__() > 0:
-            for button in button_like_post:
-                try:
-                    button.click()
-                    print("like ta on")
-                except Exception as e:  # ignore
-                    print(e)
-
+        try:
+            like_comment_content_element = element_wrapper.find_element_by_class_name('commentable_item')
+            like_comment_content_element_next = like_comment_content_element.find_element_by_class_name('_37uu')
+            button_like_post = like_comment_content_element_next.find_elements_by_class_name("UFILikeLink")
+            if button_like_post.__len__() > 0:
+                button_like_post[0].click()
+                print("like ta on")
+        except :  # ignore
+            print("khong like dc, khong like dc thi thoi")
+            pass
     def quit(self):
         self.clear_proxy(self.profile)
         # self.web_driver.quit()
@@ -228,8 +238,9 @@ class FunctionsWebDriver:
         for child_user_content_wrapper in childes_user_content_wrapper:
             # try:
             self.process_in_post(child_user_content_wrapper)
-                # except:
-                #     print("Error in post")
+            # except Exception as e:
+            #     print(e)
+            #     print("Error in post")
         # except NoSuchElementException as e:
         #     print('NoSuchElementException', e)
         # except:
@@ -254,7 +265,7 @@ class FunctionsWebDriver:
         # print(likes_text)
         list_image_urls = self.process_get_images_in_post(child_user_content_wrapper)
         print(len(list_image_urls), list_image_urls)
-        self.like_the_post(child_user_content_wrapper)
+        # self.like_the_post(child_user_content_wrapper)
 
     def get_content_of_post(self, element_wapper):
         try:
@@ -315,7 +326,7 @@ class FunctionsWebDriver:
             likes = element.find_elements_by_class_name('_4arz')
             for like in likes:
                 text += like.text + ' likes, '
-                array.extend(Utils.get_numbers_in_string())
+                array.extend(Utils.get_numbers_in_string(text))
         else:
             text += str(default_like) + ' likes, '
             array.extend([default_like])
@@ -349,7 +360,7 @@ class FunctionsWebDriver:
         :return: 1 image, 2 video, 3 difference
         """
         wait = WebDriverWait(self.web_driver, 5)
-        wait1s = WebDriverWait(self.web_driver, 1)
+        wait1s = WebDriverWait(self.web_driver, 5)
         try:
             element_theater = wait.until(expected_conditions.presence_of_element_located((By.ID, "photos_snowlift")))
 
@@ -499,4 +510,19 @@ class FunctionsWebDriver:
                 seeMore.click()
             except Exception as e:
                 print(e)
+
+    def handling_authentication(self):
+        proxy_authen = dict(
+            username='vannhan24',
+            password='B8a2ZgA'
+        )
+        WebDriverWait(self.web_driver, 10).until(expected_conditions.alert_is_present())
+        alert = self.web_driver.switch_to.alert
+        alert.send_keys(proxy_authen['username'] + Keys.TAB + proxy_authen['password'])
+        alert.accept()
+        self.web_driver.switch_to.default_content()
+
+
+
+        
 
