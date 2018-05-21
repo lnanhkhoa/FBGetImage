@@ -1,7 +1,6 @@
 import os
 import time
 import random
-
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException
 from selenium.webdriver import FirefoxProfile, DesiredCapabilities
@@ -14,20 +13,18 @@ from selenium.webdriver.firefox.options import Options
 
 from .process_image import ProcessImage
 from apps.utils import Utils
-import configparser
-config = configparser.ConfigParser()
-config.read('config.ini')
+from config import DATABASE_CONFIG
 
 # Process Image
-path_image = config['DATABASE_CONFIG']['path_image']
-tree_path = config['DATABASE_CONFIG']['tree_path']
-enable_change_proxy = config['DATABASE_CONFIG']['enable_change_proxy']
-proxy_host = config['DATABASE_CONFIG']['proxy_host']
-proxy_port = config['DATABASE_CONFIG']['proxy_port']
-type_script = config['DATABASE_CONFIG']['type_of_run_script']
+path_image = DATABASE_CONFIG['path_image']
+tree_path = DATABASE_CONFIG['tree_path']
+enable_change_proxy = DATABASE_CONFIG['enable_change_proxy']
+proxy_host = DATABASE_CONFIG['proxy_host']
+proxy_port = DATABASE_CONFIG['proxy_port']
+type_script = DATABASE_CONFIG['type_of_run_script']
 proxy_authen = dict(
-    username=config['DATABASE_CONFIG']['proxy_username'],
-    password=config['DATABASE_CONFIG']['proxy_password']
+    username=DATABASE_CONFIG['proxy_username'],
+    password=DATABASE_CONFIG['proxy_password']
 )
 
 cur_path = os.path.dirname(__file__)
@@ -69,9 +66,9 @@ class FunctionsWebDriver:
         firefox_capabilities['marionette'] = True
         firefox_capabilities['binary'] = '/usr/bin/firefox'
 
-        options = Options()
-        options.add_argument("--headless")
-        self.web_driver = webdriver.Firefox(firefox_profile=self.profile, firefox_options=options, capabilities=firefox_capabilities)
+        # options = Options()
+        # options.add_argument("--headless")
+        self.web_driver = webdriver.Firefox(firefox_profile=self.profile, capabilities=firefox_capabilities)
         self.handling_authentication()
         self.web_driver.maximize_window()
         self.actions = ActionChains(self.web_driver)
@@ -133,7 +130,7 @@ class FunctionsWebDriver:
         logout = self.web_driver.find_element_by_id("userNavigationLabel")
         logout.click()
         print('log out acc')
-        time.sleep(1)
+        time.sleep(3)
         logout2 = self.web_driver.find_element_by_css_selector(
             "li._54ni:nth-child(12) > a:nth-child(1) > span:nth-child(1) > span:nth-child(1)")
         logout2.click()
@@ -149,7 +146,7 @@ class FunctionsWebDriver:
         wait = WebDriverWait(self.web_driver, 10)
         search_page = wait.until(expected_conditions.presence_of_element_located((By.TAG_NAME, "html")))
         stop_send_key = False
-        count = 100
+        count = 50
         while not stop_send_key or count < 1:
             count -= 1
             search_page.send_keys(Keys.END)
@@ -232,7 +229,7 @@ class FunctionsWebDriver:
             pass
     def quit(self):
         self.clear_proxy(self.profile)
-        # self.web_driver.quit()
+        self.web_driver.quit()
 
     def get_webdriver(self):
         return self.web_driver
@@ -270,7 +267,7 @@ class FunctionsWebDriver:
         print('<-------------------->')
         content_post = self.get_content_of_post(child_user_content_wrapper)
         list_link = Utils.get_link_buy_product(content_post)
-        self.save_link_to_buy_product(list_link) # skip
+        self.save_link_to_buy_product(list_link)  # skip
         list_image_urls = self.process_get_images_in_post(child_user_content_wrapper)
         print(len(list_image_urls), list_image_urls)
         # self.like_the_post(child_user_content_wrapper)
@@ -337,7 +334,7 @@ class FunctionsWebDriver:
         number_of_likes, number_of_shares = '0 likes', '0 share'
         try:
             likes = get_like_share.find_element_by_class_name('_4arz')
-            number_of_likes = likes.get_attribute("innerText")
+            likes_text = likes.get_attribute("innerText")
             # print('The number of likes:', number_of_likes)
         except NoSuchElementException as e:
             # print("The number of likes: 0")
@@ -354,7 +351,7 @@ class FunctionsWebDriver:
             pass
         except Exception as e:
             print(e)
-        return str(number_of_likes + number_of_shares)
+        return str(number_of_likes + ', ' + number_of_shares)
 
     def tracking_theater(self):
         """
@@ -412,8 +409,9 @@ class FunctionsWebDriver:
                 process_image.get_image_into_all(url, name_image)
             else:
                 url = ""
-        likes = self.get_like_in_theater()
-        return [[url], likes]
+        like_share = self.get_like_in_theater()
+        print(like_share)
+        return [[url], like_share]
 
     def __get_faster__data_image_theater__(self):
         # try:
@@ -427,6 +425,7 @@ class FunctionsWebDriver:
     def get_multiple_data_image_theater(self):
         print('multi mode')
         array_checkin = []
+        array_likeshare = []
         result_tracking_post = self.tracking_theater()
         if result_tracking_post == 3:
             # mac dinh 0 likes, 0 share
@@ -441,9 +440,10 @@ class FunctionsWebDriver:
                     if new_url[0] in array_checkin:
                         break
                     array_checkin.extend(new_url)
+                    array_likeshare.append(likes)
             self.next_image_theater()
             result_tracking = self.tracking_theater()
-        likes = '0'
+        print(array_likeshare)
         return [array_checkin, likes]
 
     def get_different_data_image(self) -> object:
