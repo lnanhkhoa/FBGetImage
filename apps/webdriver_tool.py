@@ -397,6 +397,7 @@ class FunctionsWebDriver:
         div_image = wait.until(expected_conditions.presence_of_element_located(
             (By.CLASS_NAME, "stageWrapper")))
         image_urls_download = div_image.find_elements_by_class_name("spotlight")
+        like_share = self.get_like_in_theater()
         if image_urls_download.__len__() == 0:
             url = ""
         else:
@@ -405,9 +406,9 @@ class FunctionsWebDriver:
                 name_image = Utils.get_name_in_string(url)
                 process_image.get_image_from_url(url, name_image)
                 process_image.get_image_into_all(url, name_image)
+                process_image.add_likes_shares_into_image(name_image, like_share)
             else:
                 url = ""
-        like_share = self.get_like_in_theater()
         return [[url], like_share]
 
     def __get_faster__data_image_theater__(self):
@@ -451,15 +452,16 @@ class FunctionsWebDriver:
             wait.until(expected_conditions.presence_of_element_located((
                 By.CSS_SELECTOR, "div[class='_10 _1mlf uiLayer _4-hy _3qw']")))
             all_image = wait.until(expected_conditions.presence_of_all_elements_located((By.CLASS_NAME, "_580_")))
+            like_share = '0 likes, 0 shares'
             for image in all_image:
                 url = image.get_attribute('src')
                 if '.jpg' in url:
                     name_image = Utils.get_name_in_string(url)
                     process_image.get_image_from_url(url, name_image)
                     process_image.get_image_into_all(url, name_image)
+                    process_image.add_likes_shares_into_image(name_image, like_share)
                     array_url.append(url)
-            like = '0 likes, 0 share'
-            return [array_url, like]
+            return [array_url, like_share]
         except Exception as e:
             print(e)
             print("error when get diff image")

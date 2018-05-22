@@ -48,9 +48,11 @@ def main():
         functionsWebDriver.process_in_container(name)
 
 def finish_process():
+    # os.system('python apps\mail.py')
+    functionsWebDriver.logout()
     pass
     # functionsWebDriver.logout()
-    # functionsWebDriver.quit()
+    functionsWebDriver.quit()
 
 if __name__ == '__main__':
     start = time.time()

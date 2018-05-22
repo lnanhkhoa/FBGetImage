@@ -153,7 +153,7 @@ class Example(Frame):
                 window.title(str[number_last])
                 self.mg = Image.open(fl)
                 w, h = Image.open(fl).size
-                window.geometry(("%dx%d+300+300") % (w, h))
+                window.geometry(("%dx%d + 300 + 300") % (w, h))
                 window.configure(background='grey')
                 path= fl 
                 self.img = Image.open(path)
