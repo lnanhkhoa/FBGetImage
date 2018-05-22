@@ -32,7 +32,6 @@ def preprocessor():
     # functionsWebDriver.process_like_fanpage(0.5)
     # functionsWebDriver.click_see_more()
 
-
 def databasesShow():
     tinydbInfoAcc.show_all()
 

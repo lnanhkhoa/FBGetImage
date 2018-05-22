@@ -3,3 +3,5 @@ selenium
 tinydb
 proxy_list
 Pillow
+numpy
+fpdf

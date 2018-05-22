@@ -335,9 +335,9 @@ class FunctionsWebDriver:
         try:
             likes = get_like_share.find_element_by_class_name('_4arz')
             likes_text = likes.get_attribute("innerText")
-            # print('The number of likes:', number_of_likes)
+            if likes_text.find('likes') > 0:
+                likes_text+=' likes'
         except NoSuchElementException as e:
-            # print("The number of likes: 0")
             pass
         except Exception as e:
             print(e)
@@ -345,9 +345,7 @@ class FunctionsWebDriver:
         try:
             shares = get_like_share.find_element_by_class_name('UFIShareLink')
             number_of_shares = shares.get_attribute("innerText")
-            # print('The number of shares:', number_of_shares)
         except NoSuchElementException:
-            # print("The number of shares: 0")
             pass
         except Exception as e:
             print(e)
@@ -410,7 +408,6 @@ class FunctionsWebDriver:
             else:
                 url = ""
         like_share = self.get_like_in_theater()
-        print(like_share)
         return [[url], like_share]
 
     def __get_faster__data_image_theater__(self):
@@ -495,16 +492,6 @@ class FunctionsWebDriver:
             print(e)
             self.press_key_in_page_html(Keys.ESCAPE)
 
-    def process_dislike_fanpage(self):
-        list_likepage_button = self.web_driver.find_elements_by_class_name('PageLikeButton')
-        if list_likepage_button.__len__() > 0:
-            print('dislike')
-            print(list_likepage_button.__len__())
-            for likepage_button in list_likepage_button:
-                self.web_driver.execute_script("arguments[0].click();", likepage_button)
-            list_dislike_page = self.web_driver.find_elements_by_class_name('itemAnchor')
-            for dislike_page in list_dislike_page:
-                self.web_driver.execute_script("arguments[0].click();", dislike_page)
 
     def handling_authentication(self):
         WebDriverWait(self.web_driver, 20).until(expected_conditions.alert_is_present())
@@ -512,3 +499,14 @@ class FunctionsWebDriver:
         alert.send_keys(proxy_authen['username'] + Keys.TAB + proxy_authen['password'])
         alert.accept()
         self.web_driver.switch_to.default_content()
+
+    def send_message(self):
+        self.get_URL('https://www.facebook.com/lnanhkhoa')
+        #message_box = self.driver.find_element_by_css_selector("a[href='https://www.facebook.com/messages/t/100004703621008']")
+        message_box = self.driver.find_element_by_css_selector("a[href='/messages/t/lnanhkhoa/']")
+        message_box.click()
+        time.sleep(5)
+        send_box = self.driver.find_element_by_css_selector(".notranslate")
+        #time.sleep(10)
+        send_box.send_keys("Hi")
+        send_box.send_keys(Keys.ENTER)
