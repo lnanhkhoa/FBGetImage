@@ -6,11 +6,11 @@ from config import DATABASE_CONFIG
 
 
 class ProcessImage:
-    def __init__(self, stored_image_path, stored_all_images_path):
+    def __init__(self, tree_path, stored_image_path, stored_all_images_path):
         self.stored_image_path = stored_image_path
         self.stored_all_images_path = stored_all_images_path
         self.path_image = DATABASE_CONFIG['path_image']
-        self.tree_path = DATABASE_CONFIG['tree_path']
+        self.tree_path = str(tree_path)
 
     def get_image_from_url(self, pic_url, name):
         file = os.path.join(self.stored_image_path, name)

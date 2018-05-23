@@ -17,6 +17,11 @@ class TinyDBInfoAcc:
             'content_post': content_post
         })
 
+    def insert_acc(self, username):
+        self.db.insert({
+            'username': username
+        })
+
     def show_all(self):
         for item in self.db:
             print(item)

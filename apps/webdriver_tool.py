@@ -14,34 +14,31 @@ from selenium.webdriver.firefox.options import Options
 from .process_image import ProcessImage
 from apps.utils import Utils
 from config import DATABASE_CONFIG
+from manager_files import *
 
 # Process Image
 path_image = DATABASE_CONFIG['path_image']
-tree_path = DATABASE_CONFIG['tree_path']
 enable_change_proxy = DATABASE_CONFIG['enable_change_proxy']
-proxy_host = DATABASE_CONFIG['proxy_host']
-proxy_port = DATABASE_CONFIG['proxy_port']
 type_script = DATABASE_CONFIG['type_of_run_script']
-proxy_authen = dict(
-    username=DATABASE_CONFIG['proxy_username'],
-    password=DATABASE_CONFIG['proxy_password']
-)
-
 cur_path = os.path.dirname(__file__)
-image_path_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), path_image, tree_path)
-all_images_path_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), path_image, "all")
-if not os.path.exists(image_path_directory):
-    os.makedirs(image_path_directory)
-if not os.path.exists(all_images_path_directory):
-    os.makedirs(all_images_path_directory)
-
-process_image = ProcessImage(image_path_directory, all_images_path_directory)
 
 
 class FunctionsWebDriver:
-    def __init__(self, select_browser, tinydb_info_acc):
+    def __init__(self, select_browser, tinydb_info_acc, numeric):
+        tree_path = str(numeric)
+        image_path_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                            path_image, tree_path)
+        all_images_path_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                                 path_image, "all")
+        if not os.path.exists(image_path_directory):
+            os.makedirs(image_path_directory)
+        if not os.path.exists(all_images_path_directory):
+            os.makedirs(all_images_path_directory)
+
+        self.process_image = ProcessImage(tree_path, image_path_directory, all_images_path_directory)
         self.select_browser = select_browser
         self.tinydb_info_acc = tinydb_info_acc
+        self.authentication = False
         self.profile: FirefoxProfile = FirefoxProfile()
         self.profile.set_preference("permissions.default.desktop-notification", 1)
         self.profile.set_preference("browser.download.folderList", 2)
@@ -56,22 +53,43 @@ class FunctionsWebDriver:
         self.profile.set_preference("browser.download.manager.useWindow", False)
         self.profile.set_preference("browser.download.manager.showAlertOnComplete", False)
         self.profile.set_preference("browser.download.manager.closeWhenDone", True)
+
+        text_proxy = get_proxy(numeric)
+        array_proxy = text_proxy.split('|')
+        if array_proxy.__len__() > 3:
+            necessary_authen = True
+            proxy_host = array_proxy[0]
+            proxy_port = array_proxy[1]
+            proxy_authen = dict(
+                username=array_proxy[2],
+                password=array_proxy[3]
+            )
+        else:
+            necessary_authen = False
+            proxy_host = array_proxy[0]
+            proxy_port = array_proxy[1]
+            proxy_authen = dict()
+
         if enable_change_proxy == '1':
             self.profile = self.change_proxy(proxy_host, proxy_port, self.profile)
         else:
             self.profile = self.clear_proxy(self.profile)
         self.profile.update_preferences()
+        #
+        # firefox_capabilities = DesiredCapabilities.FIREFOX
+        # firefox_capabilities['marionette'] = True
+        # firefox_capabilities['binary'] = '/usr/bin/firefox'
 
-        firefox_capabilities = DesiredCapabilities.FIREFOX
-        firefox_capabilities['marionette'] = True
-        firefox_capabilities['binary'] = '/usr/bin/firefox'
-
-        # options = Options()
-        # options.add_argument("--headless")
-        self.web_driver = webdriver.Firefox(firefox_profile=self.profile, capabilities=firefox_capabilities)
-        self.handling_authentication()
-        self.web_driver.maximize_window()
+        options = Options()
+        options.add_argument("--headless")
+        self.web_driver = webdriver.Firefox(firefox_profile=self.profile, firefox_options=options)
+        if necessary_authen:
+            self.authentication = self.handling_authentication(proxy_authen)
+        # self.web_driver.maximize_window()
         self.actions = ActionChains(self.web_driver)
+
+    def is_authen(self):
+        return self.authentication
 
     @staticmethod
     def change_proxy(ip_host: str, ip_port: str, profile: object = None) -> object:
@@ -113,28 +131,31 @@ class FunctionsWebDriver:
 
     def login(self, account_facebook):
         print("Opened facebook")
-        username_box = self.web_driver.find_element_by_id('email')
-        username_box.send_keys(account_facebook.username)
-        print("Email Id entered")
-        time.sleep(1)
-        password_box = self.web_driver.find_element_by_id('pass')
-        password_box.send_keys(account_facebook.password)
-        print("Password entered")
-        login_box = self.web_driver.find_element_by_id('loginbutton')
-        login_box.click()
-        print("Done")
-        # self.web_driver.get_screenshot_as_file("capture.png")
-        return True
-
+        try:
+            username_box = self.web_driver.find_element_by_id('email')
+            username_box.send_keys(account_facebook.username)
+            time.sleep(0.5)
+            password_box = self.web_driver.find_element_by_id('pass')
+            password_box.send_keys(account_facebook.password)
+            login_box = self.web_driver.find_element_by_id('loginbutton')
+            login_box.click()
+            print("Login Successfully !")
+            return True
+        except Exception as e:
+            print('error in Login')
+            return False
     def logout(self):
-        logout = self.web_driver.find_element_by_id("userNavigationLabel")
-        logout.click()
-        print('log out acc')
-        time.sleep(3)
-        logout2 = self.web_driver.find_element_by_css_selector(
-            "li._54ni:nth-child(12) > a:nth-child(1) > span:nth-child(1) > span:nth-child(1)")
-        logout2.click()
-        return True
+        try:
+            logout = self.web_driver.find_element_by_id("userNavigationLabel")
+            logout.click()
+            print('log out acc')
+            time.sleep(3)
+            logout2 = self.web_driver.find_element_by_css_selector(
+                "li._54ni:nth-child(12) > a:nth-child(1) > span:nth-child(1) > span:nth-child(1)")
+            logout2.click()
+        except Exception as e:
+            print("-->Error in Logout: ")
+            print(e)
 
     def press_key_in_page_html(self, keypress: object) -> object:
         wait = WebDriverWait(self.web_driver, 10)
@@ -147,7 +168,7 @@ class FunctionsWebDriver:
         search_page = wait.until(expected_conditions.presence_of_element_located((By.TAG_NAME, "html")))
         stop_send_key = False
         count = 50
-        while not stop_send_key or count < 1:
+        while not (stop_send_key or count < 1):
             count -= 1
             search_page.send_keys(Keys.END)
             time.sleep(2)
@@ -169,6 +190,14 @@ class FunctionsWebDriver:
             except Exception as e:
                 print('error in click_see_more')
                 print(e)
+
+    def check_checkpoint(self):
+        try:
+            self.web_driver.find_element_by_class_name('BrowseResultsContainer')
+            self.web_driver.find_element_by_class_name('u_ps_0_3_0_browse_result_below_fold')
+            return False
+        except:
+            return True
 
     def get_list_name_container(self):
         count = 0
@@ -224,9 +253,10 @@ class FunctionsWebDriver:
             if button_like_post.__len__() > 0:
                 button_like_post[0].click()
                 print("like ta on")
-        except :  # ignore
+        except:  # ignore
             print("khong like dc, khong like dc thi thoi")
             pass
+
     def quit(self):
         self.clear_proxy(self.profile)
         self.web_driver.quit()
@@ -239,19 +269,19 @@ class FunctionsWebDriver:
         :param name:
         :return:
         """
-        # try:
-        browse_results_container = self.web_driver.find_element_by_id(name)
-        childes_user_content_wrapper = browse_results_container.find_elements_by_class_name('userContentWrapper')
-        for child_user_content_wrapper in childes_user_content_wrapper:
-            # try:
-            self.process_in_post(child_user_content_wrapper)
-            # except Exception as e:
-            #     print(e)
-            #     print("Error in post")
-        # except NoSuchElementException as e:
-        #     print('NoSuchElementException', e)
-        # except:
-        #     print("Error in container")
+        try:
+            browse_results_container = self.web_driver.find_element_by_id(name)
+            childes_user_content_wrapper = browse_results_container.find_elements_by_class_name('userContentWrapper')
+            for child_user_content_wrapper in childes_user_content_wrapper:
+                try:
+                    self.process_in_post(child_user_content_wrapper)
+                except Exception as e:
+                    print(e)
+                    print("Error in post")
+        except NoSuchElementException as e:
+            print('NoSuchElementException', e)
+        except:
+            print("Error in container")
 
     def process_in_post(self, child_user_content_wrapper):
         """
@@ -291,7 +321,7 @@ class FunctionsWebDriver:
         """
         list_image_urls = []
         list_image_theater = element_wapper.find_elements_by_css_selector("a[rel='theater']"
-                                                                    + "[data-render-location='homepage_stream']")
+                                                                          + "[data-render-location='homepage_stream']")
         if list_image_theater.__len__() == 0:
             print("No image")
             list_image_urls = []
@@ -336,7 +366,7 @@ class FunctionsWebDriver:
             likes = get_like_share.find_element_by_class_name('_4arz')
             likes_text = likes.get_attribute("innerText")
             if likes_text.find('likes') > 0:
-                likes_text+=' likes'
+                likes_text += ' likes'
         except NoSuchElementException as e:
             pass
         except Exception as e:
@@ -404,9 +434,9 @@ class FunctionsWebDriver:
             url = image_urls_download[0].get_attribute('src')
             if '.jpg' in url:
                 name_image = Utils.get_name_in_string(url)
-                process_image.get_image_from_url(url, name_image)
-                process_image.get_image_into_all(url, name_image)
-                process_image.add_likes_shares_into_image(name_image, like_share)
+                self.process_image.get_image_from_url(url, name_image)
+                self.process_image.get_image_into_all(url, name_image)
+                self.process_image.add_likes_shares_into_image(name_image, like_share)
             else:
                 url = ""
         return [[url], like_share]
@@ -457,9 +487,9 @@ class FunctionsWebDriver:
                 url = image.get_attribute('src')
                 if '.jpg' in url:
                     name_image = Utils.get_name_in_string(url)
-                    process_image.get_image_from_url(url, name_image)
-                    process_image.get_image_into_all(url, name_image)
-                    process_image.add_likes_shares_into_image(name_image, like_share)
+                    self.process_image.get_image_from_url(url, name_image)
+                    self.process_image.get_image_into_all(url, name_image)
+                    self.process_image.add_likes_shares_into_image(name_image, like_share)
                     array_url.append(url)
             return [array_url, like_share]
         except Exception as e:
@@ -472,11 +502,11 @@ class FunctionsWebDriver:
             'button.PageLikeButton:not(PageLikedButton)')
         length = list_likepage_button.__len__()
         number_of_delete_elements = Utils.holding_percent(length, percent)
-        print('like fanpage ' + str(length-number_of_delete_elements)
+        print('like fanpage ' + str(length - number_of_delete_elements)
               + '/ ' + str(length))
         if number_of_delete_elements > 0:
             for x in range(0, number_of_delete_elements):
-                list_likepage_button.pop(random.randint(0, length-x-1))
+                list_likepage_button.pop(random.randint(0, length - x - 1))
         if list_likepage_button.__len__() > 0:
             for likepage_button in list_likepage_button:
                 # avoid Stale Element Exception
@@ -494,21 +524,26 @@ class FunctionsWebDriver:
             print(e)
             self.press_key_in_page_html(Keys.ESCAPE)
 
-
-    def handling_authentication(self):
+    def handling_authentication(self, proxy_authen):
         WebDriverWait(self.web_driver, 20).until(expected_conditions.alert_is_present())
-        alert = self.web_driver.switch_to.alert
-        alert.send_keys(proxy_authen['username'] + Keys.TAB + proxy_authen['password'])
-        alert.accept()
-        self.web_driver.switch_to.default_content()
+        try:
+            alert = self.web_driver.switch_to.alert
+            alert.send_keys(proxy_authen['username'] + Keys.TAB + proxy_authen['password'])
+            alert.accept()
+            self.web_driver.switch_to.default_content()
+            return True
+        except Exception as e:
+            print(e)
+            print('Error in handling authentcation')
+            return False
 
     def send_message(self):
         self.get_URL('https://www.facebook.com/lnanhkhoa')
-        #message_box = self.driver.find_element_by_css_selector("a[href='https://www.facebook.com/messages/t/100004703621008']")
+        # message_box = self.driver.find_element_by_css_selector("a[href='https://www.facebook.com/messages/t/100004703621008']")
         message_box = self.driver.find_element_by_css_selector("a[href='/messages/t/lnanhkhoa/']")
         message_box.click()
         time.sleep(5)
         send_box = self.driver.find_element_by_css_selector(".notranslate")
-        #time.sleep(10)
+        # time.sleep(10)
         send_box.send_keys("Hi")
         send_box.send_keys(Keys.ENTER)

@@ -1,7 +1,7 @@
 import os
 import time
 from queue import Queue
-from threading import Thread
+from account_instance import AccountInstance
 
 
 def do_nothing():
@@ -11,7 +11,8 @@ def do_nothing():
 
 def do_stuff(q: Queue):
   while getattr(q, 'do_run', True):
-    print(q.get())
-    do_nothing()
-    # os.system('.\\venv\\Scripts\\python.exe main.py')
+    numeric = q.get()
+    print('SO THU TU:' + str(numeric))
+    instance = AccountInstance(numeric)
+    instance.run()
     q.task_done()
